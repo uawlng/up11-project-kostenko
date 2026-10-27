@@ -2,8 +2,8 @@ import sys
 import os
 from PySide6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout,
                                QWidget, QHBoxLayout, QScrollArea, QPushButton,
-                               QMessageBox)
-from PySide6.QtGui import QIcon, QPixmap
+                               QMessageBox, QComboBox, QLineEdit)
+from PySide6.QtGui import QIcon, QPixmap, QFont
 from PySide6.QtCore import Qt
 from database import Database
 
@@ -21,12 +21,32 @@ def calculate_price(product_id, old_price):
 def create_card(product):
     card = QWidget()
     card.setObjectName("productCard")
-    card.setStyleSheet("""
-        #productCard {
-            border: 1px solid #000000;
+
+    total_quantity = product[5] if len(product) > 5 else 1
+    old_price = float(product[2]) if product[2] else 0.0
+    new_price = calculate_price(product[0], old_price)
+    discount = calculate_discount(old_price, new_price)
+
+    if total_quantity == 0:
+        bg_color = "#ADD8E6"
+        border_color = "#ADD8E6"
+    elif discount > 15:
+        bg_color = "#E8F5E9"
+        border_color = "#2E8B57"
+    else:
+        bg_color = "#FFFFFF"
+        border_color = "#000000"
+
+    card.setStyleSheet(f"""
+        #productCard {{
+            border: 1px solid {border_color};
             border-radius: 4px;
-            background-color: #FFFFFF;
-        }
+            background-color: {bg_color};
+        }}
+        #productCard QLabel {{
+            background-color: transparent;
+            font-family: Calibri;
+        }}
     """)
 
     main_layout = QHBoxLayout(card)
@@ -36,16 +56,17 @@ def create_card(product):
     image_label = QLabel()
     image_label.setFixedSize(100, 100)
     image_label.setAlignment(Qt.AlignCenter)
-    image_label.setStyleSheet("border: 1px solid #000000;")
+    image_label.setStyleSheet("border: 1px solid #000000; background-color: #FFFFFF;")
 
     product_id = product[0]
     name = product[1] if product[1] else "Наименование"
-    old_price = float(product[2]) if product[2] else 0.0
     file_name = product[3]
     manufacturer = product[4] if product[4] else "Неизвестный производитель"
+    
+    category_name = product[6] if len(product) > 6 else "Без категории"
 
     if file_name:
-        image_path = os.path.join("images", file_name)
+        image_path = os.path.join("image", file_name)
     else:
         image_path = os.path.join("resources", "picture.png")
 
@@ -61,16 +82,21 @@ def create_card(product):
     text_layout = QVBoxLayout()
     text_layout.setSpacing(5)
     
-    text_style = "font-size: 14px; border: none; color: #000000;"
+    text_style = "font-size: 14px; border: none; color: #000000; font-family: Calibri;"
 
     title = QLabel(f"<b>{manufacturer} | {name}</b>")
     title.setStyleSheet(text_style)
 
-    category_label = QLabel(f"Категория: Садовый инвентарь")
+    category_label = QLabel(f"Категория: {category_name}")
     category_label.setStyleSheet(text_style)
 
-    quantity_label = QLabel(f"Количество: 1 шт.")
-    quantity_label.setStyleSheet(text_style)
+    quantity_text = f"Количество: {total_quantity} шт." if total_quantity > 0 else "Нет в наличии"
+    quantity_label = QLabel(quantity_text)
+    
+    if total_quantity == 0:
+        quantity_label.setStyleSheet("font-size: 14px; border: none; color: #d9534f; font-weight: bold; font-family: Calibri;")
+    else:
+        quantity_label.setStyleSheet(text_style)
 
     compound_label = QLabel(f"Состав: Металл, дерево")
     compound_label.setStyleSheet(text_style)
@@ -84,25 +110,22 @@ def create_card(product):
 
     main_layout.addLayout(text_layout, 1)
 
-    # --- БЛОК С ЦЕНАМИ ---
-    new_price = calculate_price(product_id, old_price)
-    discount = calculate_discount(old_price, new_price)
-
     price_layout = QVBoxLayout()
     price_layout.setAlignment(Qt.AlignTop | Qt.AlignRight)
     price_layout.setSpacing(2)
 
-    # 1. Старая цена (перечеркнутая и красная)
     old_price_label = QLabel(f"<s>{old_price:.2f} ₽</s>")
     old_price_label.setAlignment(Qt.AlignRight)
-    old_price_label.setStyleSheet("color: red; font-size: 14px; border: none;")
+    old_price_label.setStyleSheet("color: red; font-size: 14px; border: none; font-family: Calibri;")
 
-    # 2. Итоговая цена (ЧЁРНАЯ и жирная)
     new_price_label = QLabel(f"<b>{new_price:.2f} ₽</b>")
     new_price_label.setAlignment(Qt.AlignRight)
-    new_price_label.setStyleSheet("color: black; font-weight: bold; font-size: 16px; border: none;")
+    
+    if discount > 15:
+        new_price_label.setStyleSheet("color: #2E8B57; font-weight: bold; font-size: 16px; border: none; font-family: Calibri;")
+    else:
+        new_price_label.setStyleSheet("color: black; font-weight: bold; font-size: 16px; border: none; font-family: Calibri;")
 
-    # Скрываем старую цену, если скидки нет
     if discount > 0:
         old_price_label.show()
     else:
@@ -127,47 +150,98 @@ class MainWindow(QMainWindow):
         self.resize(900, 700)
         self.setWindowIcon(QIcon("resources/icon.ico"))
 
+        font = QFont("Calibri", 10)
+        self.setFont(font)
+
         self.setStyleSheet("""
-            QMainWindow { background-color: #FFFFFF; }
+            QMainWindow { background-color: #FFFFFF; font-family: Calibri; }
             QLabel { font-family: Calibri; }
             #HeaderLabel { font-size: 28px; font-weight: bold; color: #2c3e50; margin: 20px; }
-            QPushButton { padding: 10px; margin: 5px; font-size: 14px; background-color: #70B2AF; color: white; border: none; border-radius: 5px; }
+            QPushButton { 
+                padding: 10px; margin: 5px; font-size: 14px; 
+                background-color: #70B2AF; color: white; 
+                border: none; border-radius: 5px; font-family: Calibri; 
+            }
             QPushButton:hover { background-color: #5a9a97; }
+            QComboBox, QLineEdit {
+                padding: 5px; font-size: 14px; font-family: Calibri; 
+                border: 1px solid #ccc; border-radius: 3px;
+            }
         """)
 
         self.setup_ui()
         self.setup_role_interface()
+        self.load_products()
 
     def setup_ui(self):
         central = QWidget()
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
 
-        header = QHBoxLayout()
+        header_widget = QWidget()
+        header_widget.setStyleSheet("background-color: #D2F6E7; border-radius: 5px;")
+        header_layout = QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(10, 10, 10, 10)
 
         logo_header = QLabel()
         pixmap_logo = QPixmap("resources/logo.png")
         if not pixmap_logo.isNull():
             logo_header.setPixmap(pixmap_logo.scaledToHeight(50, Qt.SmoothTransformation))
-        header.addWidget(logo_header)
+        header_layout.addWidget(logo_header)
 
-        header.addStretch()
+        header_layout.addStretch()
 
         name_text = f"ФИО: {self.full_name}" if self.full_name else "ФИО: —"
         name_label = QLabel(name_text)
-        name_label.setStyleSheet("font-weight: bold; font-size: 14px; color: #2c3e50;")
-        header.addWidget(name_label)
+        name_label.setStyleSheet("font-weight: bold; font-size: 14px; color: #2c3e50; background-color: transparent;")
+        header_layout.addWidget(name_label)
 
         self.logout_button = QPushButton("Выход")
         self.logout_button.clicked.connect(self.logout)
-        header.addWidget(self.logout_button)
+        self.logout_button.setStyleSheet("""
+            QPushButton {
+                background-color: #70B2AF;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 15px;
+                font-family: Calibri;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #5a9a97;
+            }
+        """)
+        header_layout.addWidget(self.logout_button)
 
-        main_layout.addLayout(header)
+        main_layout.addWidget(header_widget)
 
         title = QLabel("Сад и огород — Каталог")
         title.setObjectName("HeaderLabel")
         title.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(title)
+
+        controls_layout = QHBoxLayout()
+        
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Поиск...")
+        self.search_input.textChanged.connect(self.load_products)
+        controls_layout.addWidget(self.search_input, 2)
+
+        self.filter_combo = QComboBox()
+        self.filter_combo.addItem("Все категории")
+        categories = self.db.get_categories()
+        for cat in categories:
+            self.filter_combo.addItem(cat)
+        self.filter_combo.currentIndexChanged.connect(self.load_products)
+        controls_layout.addWidget(self.filter_combo, 1)
+
+        self.sort_combo = QComboBox()
+        self.sort_combo.addItems(["По возрастанию", "По убыванию"])
+        self.sort_combo.currentIndexChanged.connect(self.load_products)
+        controls_layout.addWidget(self.sort_combo, 1)
+
+        main_layout.addLayout(controls_layout)
 
         self.order_button = QPushButton("Оформить заказ")
         self.manager_button = QPushButton("Заказы (менеджер)")
@@ -177,26 +251,36 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.manager_button)
         main_layout.addWidget(self.admin_button)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("border: none; background-color: #FFFFFF")
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setStyleSheet("border: none; background-color: #FFFFFF")
 
-        container = QWidget()
-        list_layout = QVBoxLayout(container)
-        list_layout.setAlignment(Qt.AlignTop)
+        self.container = QWidget()
+        self.list_layout = QVBoxLayout(self.container)
+        self.list_layout.setAlignment(Qt.AlignTop)
 
-        self.products = self.db.get_products()
-        if not self.products:
-            list_layout.addWidget(QLabel("Товары не найдены."))
-        else:
-            for product in self.products:
-                list_layout.addWidget(create_card(product))
-
-        scroll.setWidget(container)
-        main_layout.addWidget(scroll)
+        self.scroll.setWidget(self.container)
+        main_layout.addWidget(self.scroll)
 
         central.setLayout(main_layout)
         self.setCentralWidget(central)
+
+    def load_products(self):
+        search = self.search_input.text()
+        category = self.filter_combo.currentText()
+        sort_order = self.sort_combo.currentText()
+
+        for i in reversed(range(self.list_layout.count())): 
+            widget = self.list_layout.itemAt(i).widget()
+            if widget:
+                widget.setParent(None)
+
+        self.products = self.db.get_products(search, category, sort_order)
+        if not self.products:
+            self.list_layout.addWidget(QLabel("Товары не найдены."))
+        else:
+            for product in self.products:
+                self.list_layout.addWidget(create_card(product))
 
     def setup_role_interface(self):
         self.order_button.hide()
