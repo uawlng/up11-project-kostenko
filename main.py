@@ -140,11 +140,8 @@ def create_card(product):
     new_price_label = QLabel(f"<b>{new_price:.2f} ₽</b>")
     new_price_label.setAlignment(Qt.AlignRight)
 
-    if discount > 15:
-        # Большая скидка 
-        new_price_label.setStyleSheet("color: #2E8B57; font-weight: bold; font-size: 16px; border: none; font-family: Calibri;")
-    else:
-        new_price_label.setStyleSheet("color: black; font-weight: bold; font-size: 16px; border: none; font-family: Calibri;")
+    # Итоговая цена всегда черная
+    new_price_label.setStyleSheet("color: black; font-weight: bold; font-size: 16px; border: none; font-family: Calibri;")
 
     if discount > 0:
         old_price_label.show()
