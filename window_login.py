@@ -27,6 +27,7 @@ class LoginWindow(QWidget):
     def check_login(self):
         login = self.login_input.text().strip()
         
+        # Пустой логин 
         if not login:
             QMessageBox.warning(self, "Ошибка", "Введите логин!")
             return
@@ -38,7 +39,6 @@ class LoginWindow(QWidget):
             
         try:
             cursor = conn.cursor()
-            # Получаем ФИО и роль
             cursor.execute("SELECT user_id, role_id, last_name, first_name FROM users WHERE login = %s", (login,))
             result = cursor.fetchone()
             cursor.close()

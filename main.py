@@ -9,12 +9,15 @@ from database import Database
 
 
 def calculate_discount(old_price, new_price):
+    # Защита от деления на ноль, если старой цены нет
     if old_price == 0:
         return 0
+    # Процент скидки
     return (old_price - new_price) / old_price * 100
 
 
 def calculate_price(product_id, old_price):
+    # Скидка 20% 
     return float(old_price) * 0.8
 
 
@@ -22,15 +25,19 @@ def create_card(product):
     card = QWidget()
     card.setObjectName("productCard")
 
+    # Остаток на складе
     total_quantity = product[5] if len(product) > 5 else 1
     old_price = float(product[2]) if product[2] else 0.0
     new_price = calculate_price(product[0], old_price)
     discount = calculate_discount(old_price, new_price)
 
+    # Подсветка карточки в зависимости от остатка и скидки
     if total_quantity == 0:
+        # Товара нет на складе
         bg_color = "#ADD8E6"
         border_color = "#ADD8E6"
     elif discount > 15:
+        # Скидка больше 15%
         bg_color = "#E8F5E9"
         border_color = "#2E8B57"
     else:
@@ -62,15 +69,24 @@ def create_card(product):
     name = product[1] if product[1] else "Наименование"
     file_name = product[3]
     manufacturer = product[4] if product[4] else "Неизвестный производитель"
-    
+
+    # Название категории
     category_name = product[6] if len(product) > 6 else "Без категории"
 
+    # Путь к заглушке
+    placeholder_path = os.path.join("resources", "picture.png")
+
     if file_name:
-        image_path = os.path.join("image", file_name)
+        image_path = os.path.join("images", file_name)
     else:
-        image_path = os.path.join("resources", "picture.png")
+        # Если имя файла не указано
+        image_path = placeholder_path
 
     pixmap = QPixmap(image_path)
+    if pixmap.isNull():
+        # Файл не найден 
+        pixmap = QPixmap(placeholder_path)
+
     if pixmap.isNull():
         image_label.setText("IMG")
     else:
@@ -81,7 +97,7 @@ def create_card(product):
 
     text_layout = QVBoxLayout()
     text_layout.setSpacing(5)
-    
+
     text_style = "font-size: 14px; border: none; color: #000000; font-family: Calibri;"
 
     title = QLabel(f"<b>{manufacturer} | {name}</b>")
@@ -90,10 +106,12 @@ def create_card(product):
     category_label = QLabel(f"Категория: {category_name}")
     category_label.setStyleSheet(text_style)
 
+    # Нет в наличии
     quantity_text = f"Количество: {total_quantity} шт." if total_quantity > 0 else "Нет в наличии"
     quantity_label = QLabel(quantity_text)
-    
+
     if total_quantity == 0:
+        # Нет в наличии 
         quantity_label.setStyleSheet("font-size: 14px; border: none; color: #d9534f; font-weight: bold; font-family: Calibri;")
     else:
         quantity_label.setStyleSheet(text_style)
@@ -114,14 +132,16 @@ def create_card(product):
     price_layout.setAlignment(Qt.AlignTop | Qt.AlignRight)
     price_layout.setSpacing(2)
 
+    # Старая цена зачёркнута
     old_price_label = QLabel(f"<s>{old_price:.2f} ₽</s>")
     old_price_label.setAlignment(Qt.AlignRight)
     old_price_label.setStyleSheet("color: red; font-size: 14px; border: none; font-family: Calibri;")
 
     new_price_label = QLabel(f"<b>{new_price:.2f} ₽</b>")
     new_price_label.setAlignment(Qt.AlignRight)
-    
+
     if discount > 15:
+        # Большая скидка 
         new_price_label.setStyleSheet("color: #2E8B57; font-weight: bold; font-size: 16px; border: none; font-family: Calibri;")
     else:
         new_price_label.setStyleSheet("color: black; font-weight: bold; font-size: 16px; border: none; font-family: Calibri;")
@@ -178,6 +198,7 @@ class MainWindow(QMainWindow):
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
 
+        # Шапка
         header_widget = QWidget()
         header_widget.setStyleSheet("background-color: #D2F6E7; border-radius: 5px;")
         header_layout = QHBoxLayout(header_widget)
@@ -191,6 +212,7 @@ class MainWindow(QMainWindow):
 
         header_layout.addStretch()
 
+        # Если ФИО нет — прочерк
         name_text = f"ФИО: {self.full_name}" if self.full_name else "ФИО: —"
         name_label = QLabel(name_text)
         name_label.setStyleSheet("font-weight: bold; font-size: 14px; color: #2c3e50; background-color: transparent;")
@@ -222,12 +244,14 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(title)
 
         controls_layout = QHBoxLayout()
-        
+
+        # Поле поиска 
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Поиск...")
         self.search_input.textChanged.connect(self.load_products)
         controls_layout.addWidget(self.search_input, 2)
 
+        # Фильтр по категориям 
         self.filter_combo = QComboBox()
         self.filter_combo.addItem("Все категории")
         categories = self.db.get_categories()
@@ -236,6 +260,7 @@ class MainWindow(QMainWindow):
         self.filter_combo.currentIndexChanged.connect(self.load_products)
         controls_layout.addWidget(self.filter_combo, 1)
 
+        # Сортировка по цене
         self.sort_combo = QComboBox()
         self.sort_combo.addItems(["По возрастанию", "По убыванию"])
         self.sort_combo.currentIndexChanged.connect(self.load_products)
@@ -243,6 +268,7 @@ class MainWindow(QMainWindow):
 
         main_layout.addLayout(controls_layout)
 
+        # Кнопки ролей 
         self.order_button = QPushButton("Оформить заказ")
         self.manager_button = QPushButton("Заказы (менеджер)")
         self.admin_button = QPushButton("Админ-панель")
@@ -251,6 +277,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.manager_button)
         main_layout.addWidget(self.admin_button)
 
+        # Область прокрутки для карточек товаров
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setStyleSheet("border: none; background-color: #FFFFFF")
@@ -270,7 +297,7 @@ class MainWindow(QMainWindow):
         category = self.filter_combo.currentText()
         sort_order = self.sort_combo.currentText()
 
-        for i in reversed(range(self.list_layout.count())): 
+        for i in reversed(range(self.list_layout.count())):
             widget = self.list_layout.itemAt(i).widget()
             if widget:
                 widget.setParent(None)
@@ -287,15 +314,19 @@ class MainWindow(QMainWindow):
         self.manager_button.hide()
         self.admin_button.hide()
 
+        # Администратор 
         if self.role_id == 1:
             self.admin_button.show()
             self.manager_button.show()
+        # Менеджер 
         elif self.role_id == 2:
             self.manager_button.show()
+        # Покупатель 
         elif self.role_id == 3:
             self.order_button.show()
 
     def logout(self):
+        # Подтверждение выхода
         reply = QMessageBox.question(
             self,
             "Выход",
@@ -310,7 +341,6 @@ class MainWindow(QMainWindow):
             self.close()
 
     def closeEvent(self, event):
-        self.db.close_all()
         event.accept()
 
 
@@ -322,4 +352,7 @@ if __name__ == "__main__":
     login_window = LoginWindow(db)
     login_window.show()
 
-    sys.exit(app.exec())
+    exit_code = app.exec()
+    # Закрываем пул соединений при завершении приложения
+    db.close_all()
+    sys.exit(exit_code)

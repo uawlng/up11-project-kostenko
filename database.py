@@ -5,6 +5,7 @@ class Database:
     def __init__(self):
         self.connection_pool = None
         try:
+            # Создание пул соединений
             self.connection_pool = pool.SimpleConnectionPool(
                 1, 5,
                 host="localhost", port=5432,
@@ -16,15 +17,18 @@ class Database:
             self.connection_pool = None
 
     def get_connection(self):
+        # Берём соединение из пула
         if self.connection_pool is not None:
             return self.connection_pool.getconn()
         return None
 
     def release_connection(self, conn):
+        # Возвращение соединения обратно в пул
         if self.connection_pool is not None and conn is not None:
             self.connection_pool.putconn(conn)
 
     def close_all(self):
+        # Закрытие всех соединений пула
         if self.connection_pool is not None:
             self.connection_pool.closeall()
             print("Пул закрыт")
@@ -38,6 +42,7 @@ class Database:
             cursor.execute("SELECT name FROM categories ORDER BY name")
             categories = cursor.fetchall()
             cursor.close()
+            # Возвращает только названия категорий 
             return [row[0] for row in categories]
         except psycopg2.Error as e:
             print(f"Ошибка запроса категорий: {e}")
@@ -52,10 +57,11 @@ class Database:
         try:
             cursor = conn.cursor()
             
+            # Шаблон для поиска по названию 
             search_pattern = f"%{search}%"
+            # Направление сортировки по цене
             order = "ASC" if sort_order == "По возрастанию" else "DESC"
-            
-            # Запрос без p.description (поиск только по названию)
+
             query = f"""
                 SELECT p.product_id, p.name, p.price, p.image, 
                        COALESCE(m.name, 'Неизвестно') AS manufacturer,
