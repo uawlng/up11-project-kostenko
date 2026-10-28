@@ -7,7 +7,7 @@ from PySide6.QtGui import QIcon, QPixmap, QFont
 from PySide6.QtCore import Qt
 from database import Database
 
-
+#Функция
 def calculate_discount(old_price, new_price):
     # Защита от деления на ноль, если старой цены нет
     if old_price == 0:
