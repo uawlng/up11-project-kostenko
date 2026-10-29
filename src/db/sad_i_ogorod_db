@@ -1,0 +1,200 @@
+CREATE TABLE roles (
+    role_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+INSERT INTO roles (name) VALUES
+('Администратор'), ('Менеджер'), ('Клиент');
+
+CREATE TABLE categories (
+    category_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
+);
+INSERT INTO categories (name) VALUES
+('Ручной инструмент'), ('Полив'), ('Посадочные ёмкости'), ('Укрывные материалы');
+
+CREATE TABLE subcategories (
+    subcategory_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL
+);
+INSERT INTO subcategories (name) VALUES
+('Лопатки'), ('Лейки'), ('Горшки'), ('Нетканые');
+
+CREATE TABLE manufacturers (
+    manufacturer_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
+);
+INSERT INTO manufacturers (name) VALUES
+('Дачник'), ('Зелёный сезон'), ('СадЛайн'), ('ОгородДом');
+
+CREATE TABLE materials (
+    material_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
+);
+INSERT INTO materials (name) VALUES
+('Стальное полотно; деревянная рукоять'),
+('Полиэтилен; съёмный рассеиватель'),
+('Полипропилен; дренажные отверстия'),
+('Полипропиленовое нетканое полотно; упаковка 10 м²');
+
+CREATE TABLE variants (
+    variant_id SERIAL PRIMARY KEY,
+    value VARCHAR(50) NOT NULL
+);
+INSERT INTO variants (value) VALUES
+('Длина 25 см'), ('Длина 30 см'), ('Длина 35 см'),
+('Объём 3 л'), ('Объём 5 л'), ('Объём 8 л'),
+('Диаметр 12 см'), ('Диаметр 16 см'), ('Диаметр 20 см'),
+('Плотность 17 г/м²'), ('Плотность 30 г/м²'), ('Плотность 60 г/м²');
+
+CREATE TABLE products (
+    product_id SERIAL PRIMARY KEY,
+    category_id INTEGER REFERENCES categories(category_id),
+    subcategory_id INTEGER REFERENCES subcategories(subcategory_id),
+    manufacturer_id INTEGER REFERENCES manufacturers(manufacturer_id),
+    material_id INTEGER REFERENCES materials(material_id),
+    name VARCHAR(200) NOT NULL,
+    image VARCHAR(255),
+    price NUMERIC(10,2) CHECK (price > 0)
+);
+
+INSERT INTO products (category_id, subcategory_id, manufacturer_id, material_id, name, image, price) VALUES
+(1, 1, 1, 1, 'Лопатка Сад', 'IMG_29_001.png', 290.00),
+(1, 1, 2, 1, 'Лопатка Дача', 'IMG_29_002.png', 350.00),
+(1, 1, 3, 1, 'Лопатка Мини', 'IMG_29_003.png', 410.00),
+(1, 1, 4, 1, 'Лопатка Классик', 'IMG_29_004.png', 470.00),
+(1, 1, 1, 1, 'Лопатка Грядка', 'IMG_29_005.png', 530.00),
+(1, 1, 2, 1, 'Лопатка Лайт', 'IMG_29_006.png', 590.00),
+(1, 1, 3, 1, 'Лопатка Про', 'IMG_29_007.png', 650.00),
+(1, 1, 4, 1, 'Лопатка Росток', 'IMG_29_008.png', 710.00),
+(2, 2, 1, 2, 'Лейка Сад', 'IMG_29_009.png', 390.00),
+(2, 2, 2, 2, 'Лейка Дача', 'IMG_29_010.png', 470.00),
+(2, 2, 3, 2, 'Лейка Росток', 'IMG_29_011.png', 550.00),
+(2, 2, 4, 2, 'Лейка Классик', 'IMG_29_012.png', 630.00),
+(2, 2, 1, 2, 'Лейка Грядка', 'IMG_29_013.png', 710.00),
+(2, 2, 2, 2, 'Лейка Лайт', 'IMG_29_014.png', 790.00),
+(2, 2, 3, 2, 'Лейка Комфорт', 'IMG_29_015.png', 870.00),
+(2, 2, 4, 2, 'Лейка Про', 'IMG_29_016.png', 950.00),
+(3, 3, 1, 3, 'Горшок Сад', 'IMG_29_017.png', 120.00),
+(3, 3, 2, 3, 'Горшок Дача', 'IMG_29_018.png', 155.00),
+(3, 3, 3, 3, 'Горшок Росток', 'IMG_29_019.png', 190.00),
+(3, 3, 4, 3, 'Горшок Классик', 'IMG_29_020.png', 225.00),
+(3, 3, 1, 3, 'Горшок Грядка', 'IMG_29_021.png', 260.00),
+(3, 3, 2, 3, 'Горшок Лайт', 'IMG_29_022.png', 295.00),
+(3, 3, 3, 3, 'Горшок Дом', 'IMG_29_023.png', 330.00),
+(3, 3, 4, 3, 'Горшок Про', 'IMG_29_024.png', 365.00),
+(4, 4, 1, 4, 'Укрывной Лайт', 'IMG_29_025.png', 290.00),
+(4, 4, 2, 4, 'Укрывной Грядка', 'IMG_29_026.png', 355.00),
+(4, 4, 3, 4, 'Укрывной Сад', 'IMG_29_027.png', 420.00),
+(4, 4, 4, 4, 'Укрывной Сезон', 'IMG_29_028.png', 485.00),
+(4, 4, 1, 4, 'Укрывной Дача', 'IMG_29_029.png', 550.00),
+(4, 4, 2, 4, 'Укрывной Росток', 'IMG_29_030.png', 615.00),
+(4, 4, 3, 4, 'Укрывной Классик', NULL, 680.00);
+
+CREATE TABLE stock_items (
+    stock_item_id SERIAL PRIMARY KEY,
+    product_id INTEGER REFERENCES products(product_id),
+    variant_id INTEGER REFERENCES variants(variant_id),
+    quantity INTEGER CHECK (quantity >= 0)
+);
+
+INSERT INTO stock_items (product_id, variant_id, quantity) VALUES
+(1, 1, 13), (1, 2, 18), (1, 3, 23),
+(2, 1, 16), (2, 2, 21), (2, 3, 26),
+(3, 1, 19), (3, 2, 24), (3, 3, 5),
+(4, 1, 22), (4, 2, 27), (4, 3, 8),
+(5, 1, 25), (5, 2, 6), (5, 3, 11),
+(6, 1, 28), (6, 2, 9), (6, 3, 14),
+(7, 1, 7), (7, 2, 12), (7, 3, 17),
+(8, 1, 10), (8, 2, 15), (8, 3, 20),
+(9, 4, 13), (9, 5, 18), (9, 6, 23),
+(10, 4, 16), (10, 5, 21), (10, 6, 26),
+(11, 4, 19), (11, 5, 24), (11, 6, 5),
+(12, 4, 22), (12, 5, 27), (12, 6, 8),
+(13, 4, 25), (13, 5, 6), (13, 6, 11),
+(14, 4, 28), (14, 5, 9), (14, 6, 14),
+(15, 4, 7), (15, 5, 12), (15, 6, 17),
+(16, 4, 10), (16, 5, 15), (16, 6, 20),
+(17, 7, 13), (17, 8, 18), (17, 9, 23),
+(18, 7, 16), (18, 8, 21), (18, 9, 26),
+(19, 7, 19), (19, 8, 24), (19, 9, 5),
+(20, 7, 22), (20, 8, 27), (20, 9, 8),
+(21, 7, 25), (21, 8, 6), (21, 9, 11),
+(22, 7, 28), (22, 8, 9), (22, 9, 14),
+(23, 7, 7), (23, 8, 12), (23, 9, 17),
+(24, 7, 10), (24, 8, 15), (24, 9, 20),
+(25, 10, 13), (25, 11, 18), (25, 12, 23),
+(26, 10, 16), (26, 11, 21), (26, 12, 26),
+(27, 10, 19), (27, 11, 24), (27, 12, 5),
+(28, 10, 2), (28, 11, 1), (28, 12, 1),
+(29, 10, 1), (29, 11, 1), (29, 12, 1),
+(30, 10, 1), (30, 11, 0), (30, 12, 1),
+(31, 10, 0), (31, 11, 0), (31, 12, 0);
+
+CREATE TABLE users (
+    user_id SERIAL PRIMARY KEY,
+    login VARCHAR(100) NOT NULL UNIQUE,
+    last_name VARCHAR(100) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    middle_name VARCHAR(100),
+    role_id INTEGER REFERENCES roles(role_id)
+);
+
+INSERT INTO users (login, last_name, first_name, middle_name, role_id) VALUES
+('admin', 'Иванов', 'Иван', 'Сергеевич', 1),
+('manager1', 'Петров', 'Пётр', 'Алексеевич', 2),
+('manager2', 'Смирнова', 'Ольга', 'Викторовна', 2),
+('client01', 'Сидоров', 'Алексей', 'Иванович', 3),
+('client02', 'Кузнецова', 'Анна', 'Ивановна', 3),
+('client03', 'Орлов', 'Алексей', 'Иванович', 3),
+('client04', 'Новикова', 'Анна', 'Ивановна', 3),
+('client05', 'Морозов', 'Алексей', 'Иванович', 3),
+('client06', 'Волкова', 'Анна', 'Ивановна', 3),
+('client07', 'Соколов', 'Алексей', 'Иванович', 3),
+('client08', 'Лебедева', 'Анна', 'Ивановна', 3),
+('client09', 'Попов', 'Алексей', 'Иванович', 3),
+('client10', 'Егорова', 'Анна', 'Ивановна', 3),
+('client11', 'Зайцев', 'Алексей', 'Иванович', 3),
+('client12', 'Павлова', 'Анна', 'Ивановна', 3),
+('client13', 'Семёнов', 'Алексей', 'Иванович', 3),
+('client14', 'Фёдорова', 'Анна', 'Ивановна', 3),
+('client15', 'Козлов', 'Алексей', 'Иванович', 3),
+('client16', 'Макарова', 'Анна', 'Ивановна', 3),
+('client17', 'Белов', 'Алексей', 'Иванович', 3);
+
+CREATE TABLE orders (
+    order_id SERIAL PRIMARY KEY,
+    order_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    user_id INTEGER REFERENCES users(user_id)
+);
+
+INSERT INTO orders (order_date, user_id) VALUES
+('2026-04-04', 4), ('2026-04-06', 5), ('2026-04-08', 6),
+('2026-04-10', 7), ('2026-04-12', 8), ('2026-04-14', 9),
+('2026-04-16', 10), ('2026-04-18', 11), ('2026-04-20', 12),
+('2026-04-22', 13), ('2026-04-24', 14), ('2026-04-26', 15),
+('2026-04-28', 16), ('2026-04-30', 17), ('2026-05-02', 18);
+
+CREATE TABLE order_items (
+    order_item_id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(order_id),
+    stock_item_id INTEGER REFERENCES stock_items(stock_item_id),
+    quantity INTEGER CHECK (quantity > 0),
+    price NUMERIC(10,2) CHECK (price > 0)
+);
+
+INSERT INTO order_items (order_id, stock_item_id, quantity, price) VALUES
+(1, 1, 2, 290.00), (1, 2, 1, 437.50),
+(2, 3, 1, 410.00), (2, 4, 2, 587.50),
+(3, 5, 2, 504.00), (3, 6, 1, 700.50),
+(4, 7, 1, 650.00), (4, 8, 2, 887.50),
+(5, 9, 2, 390.00), (5, 10, 1, 587.50),
+(6, 11, 1, 550.00), (6, 12, 2, 787.50),
+(7, 13, 2, 710.00), (7, 14, 1, 987.50),
+(8, 15, 1, 870.00), (8, 16, 2, 1187.50),
+(9, 17, 2, 120.00), (9, 18, 1, 193.75),
+(10, 19, 1, 190.00), (10, 20, 2, 281.25),
+(11, 21, 2, 260.00), (11, 22, 1, 368.75),
+(12, 23, 1, 330.00), (12, 24, 2, 456.25),
+(13, 25, 2, 290.00), (13, 26, 1, 443.75),
+(14, 27, 1, 420.00), (14, 1, 2, 362.50),
+(15, 2, 2, 350.00), (15, 3, 1, 512.50);
